@@ -1,6 +1,4 @@
-# GoLuxafor
-[![Documentation](https://godoc.org/github.com/leosunmo/goluxafor?status.svg)](http://godoc.org/github.com/leosunmo/goluxafor)
-
+# Swift Luxafor
 A simple library to control the [Luxafor Flag](https://luxafor.com/luxafor-flag/).
 
 ## Examples
@@ -103,9 +101,3 @@ Patterns:
 * `goluxafor.Pattern6` - Random quick fade pattern
 * `goluxafor.Pattern7` - Colourful police pattern
 * `goluxafor.Pattern8` - Quick rainbow pattern
-
-
-## HID USB
-GoLuxafor uses [karalabe/hid](https://github.com/karalabe/hid) (which uses [hidapi](https://github.com/signal11/hidapi)) which seems to be the only popular HID USB library that works on MacOS. It avoids "claiming" the USB device as the Darwin kernel [automatically claims it when plugged in](https://github.com/libusb/libusb/issues/158). This'll give you a "permission denied" error unless you avoid the claim call and simply send bytes to it anyway.
-
- This could potentially cause some flaky behaviour (especially if you're running multiple Luxafor applications) but I have yet to encounter anything major since it's a fairly simple device.
