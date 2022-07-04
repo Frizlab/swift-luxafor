@@ -12,9 +12,9 @@ import IOUSBHost
 /**
  A `Luxafor` object.
  
- - Note: This is an actor because internally we hold a reference to an io\_object\_t which is probably not-concurrent-safe (not sure though).
- If later we learn the io\_object\_t is safe in a concurrent environment we could probably demote the Luxafor to a simple class.
- We’d still need the class type because we release the io\_object\_t when the Luxafor is not used anymore. */
+ - Note: This is an actor because internally we hold a reference to an IOUSBHostDevice which is probably not-concurrent-safe (not sure though).
+ If later we learn the IOUSBHostDevice is safe in a concurrent environment we could probably demote the Luxafor to a simple class.
+ We’d still need the class type because we `destroy()` the IOUSBHostDevice when the Luxafor is not used anymore. */
 public final actor Luxafor {
 	
 	/** The vendor ID for Luxafor. Should not be needed by clients. */
@@ -41,22 +41,36 @@ public final actor Luxafor {
 		guard ret == KERN_SUCCESS else {throw Err.kernelError(ret)}
 		defer {IOObjectRelease(iterator)}
 		
-		return getAll(from: iterator).map(Luxafor.init(ioObject:))
+		
+		return getAll(from: iterator)
+			.compactMap{ object in
+				/* The init is supposed to be refined for Swift too.
+				 * Once again the refined method cannot be found. */
+				do {
+					return try IOUSBHostDevice(__ioService: object, options: [/*Nothing: We do not (and cannot) capture the device.*/], queue: nil, interestHandler: nil)
+				} catch {
+					/* We release the objects for which we cannot create an IOUSBHostDevice. */
+					Conf.logger?.info("Skipping IOService object because an IOUSBHostDevice cannot be created with it.", metadata: ["object": "\(object)", "error": "\(error)"])
+					IOObjectRelease(object)
+					return nil
+				}
+			}
+			.map(Luxafor.init(device:))
 	}
 	
 	/* *************
 	   MARK: Private
 	   ************* */
 	
-	internal init(ioObject: io_object_t) {
-		self.ioObject = ioObject
+	internal init(device: IOUSBHostDevice) {
+		self.device = device
 	}
 	
 	deinit {
-		IOObjectRelease(ioObject)
+		device.destroy()
 	}
 	
-	internal let ioObject: io_object_t
+	internal let device: IOUSBHostDevice
 	
 	private static func getAll(from iterator: io_iterator_t) -> [io_object_t] {
 		guard IOIteratorIsValid(iterator) != 0 else {
