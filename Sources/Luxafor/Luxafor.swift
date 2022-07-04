@@ -39,7 +39,7 @@ public final actor Luxafor {
 		var iterator: io_iterator_t = .zero
 		let ret = IOServiceGetMatchingServices(kIOMainPortDefault, matchingDic, &iterator)
 		guard ret == KERN_SUCCESS else {throw Err.kernelError(ret)}
-		defer {IOObjectRelease(iterator)}
+		defer {releaseIOObject(iterator)}
 		
 		
 		return getAll(from: iterator)
@@ -51,7 +51,7 @@ public final actor Luxafor {
 				} catch {
 					/* We release the objects for which we cannot create an IOUSBHostDevice. */
 					Conf.logger?.info("Skipping IOService object because an IOUSBHostDevice cannot be created with it.", metadata: ["object": "\(object)", "error": "\(error)"])
-					IOObjectRelease(object)
+					releaseIOObject(object)
 					return nil
 				}
 			}
@@ -85,7 +85,7 @@ public final actor Luxafor {
 			}
 			return res
 		} catch is IterationResetRequired {
-			res.forEach{ IOObjectRelease($0) }
+			res.forEach(releaseIOObject(_:))
 			
 			/* I do hope the doc is correct and resetting the iterator will make it work again.
 			 * If not, we’ll end up with an infinite loop… */
@@ -110,6 +110,13 @@ public final actor Luxafor {
 		}
 		
 		return nil
+	}
+	
+	private static func releaseIOObject(_ object: io_object_t) {
+		let ret = IOObjectRelease(object)
+		if ret != KERN_SUCCESS {
+			Conf.logger?.error("Error releasing an io_object_t.", metadata: ["object": "\(object)", "error_number": "\(ret)"])
+		}
 	}
 	
 }
