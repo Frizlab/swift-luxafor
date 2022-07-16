@@ -103,7 +103,10 @@ public final actor Luxafor {
 		 * The IOUSBHostInterface init fails with error “Exclusive open of usb object failed.”
 		 * Then I saw the Luxafor flag is HID; so we’ll use the much lighter HID version of USB; and things should go well.
 		 * If we succeeded in getting the IOUSBHostInterface object, we could’ve created the pipes necessary to write the the device.
-		 * See https://github.com/didactek/deft-simple-usb/blob/951a3c907390342ba13c9006351c575caf02fd11/Sources/HostFWUSB/HostFWUSBDevice.swift#L70 */
+		 * See https://github.com/didactek/deft-simple-usb/blob/951a3c907390342ba13c9006351c575caf02fd11/Sources/HostFWUSB/HostFWUSBDevice.swift#L70
+		 *
+		 * After some research, I found this: https://github.com/didactek/deft-mcp2221#hid-vs-iousbhost
+		 * So yeah, we HAVE TO use HID methods to access HID devices on macOS. */
 	}
 	
 	/* *************
