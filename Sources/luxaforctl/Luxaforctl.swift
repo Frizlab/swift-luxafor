@@ -15,7 +15,7 @@ import Luxafor
 
 
 @main
-struct Luxaforctl : ParsableCommand {
+struct Luxaforctl : AsyncParsableCommand {
 	
 	static var logger: Logger = {
 		var ret = Logger(label: "main")
@@ -23,12 +23,12 @@ struct Luxaforctl : ParsableCommand {
 		return ret
 	}()
 	
-	func run() throws {
+	func run() async throws {
 		LoggingSystem.bootstrap{ _ in CLTLogger() }
 		LuxaforConfig.logger?.logLevel = .debug
 		
 		for luxafor in try Luxafor.find() {
-			print(luxafor)
+			try await luxafor.yolo()
 		}
 	}
 	

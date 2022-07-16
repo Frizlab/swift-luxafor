@@ -1,12 +1,11 @@
-/*
- * Luxafor.swift
- *
- * Created by François Lamboley on 2022/07/04.
- */
+/* Luxafor.swift
+ * Created by François Lamboley on 2022/07/04. */
 
 import Foundation
 import IOUSBHost
 
+
+/* Random link that helped: https://www.beyondlogic.org/usbnutshell/usb5.shtml */
 
 
 /**
@@ -41,7 +40,6 @@ public final actor Luxafor {
 		guard ret == KERN_SUCCESS else {throw Err.kernelError(ret)}
 		defer {releaseIOObject(iterator)}
 		
-		
 		return getAll(from: iterator)
 			.compactMap{ object in
 				/* The init is supposed to be refined for Swift too.
@@ -56,6 +54,56 @@ public final actor Luxafor {
 				}
 			}
 			.map(Luxafor.init(device:))
+	}
+	
+	public func yolo() throws {
+		guard let deviceDescriptor = device.deviceDescriptor?.pointee else {
+			throw Err.noDeviceDescriptor
+		}
+		guard let configPtr = device.configurationDescriptor else {
+			throw Err.noConfigurationDescriptor
+		}
+		guard configPtr.pointee.bNumInterfaces == 1 else {
+			throw Err.invalidInterfacesCount
+		}
+		guard let interfaceDescription = IOUSBGetNextInterfaceDescriptor(configPtr, nil/* Current descriptor: nil. We get first (and only) descriptor */)?.pointee else {
+			throw Err.cannotGetInteraceDescriptor
+		}
+		
+		/* Same as IOUSBHostDevice.__createMatchingDictionary (in find() method), we could create the dictionary manually too.
+		 * The "IOProviderClass" key would be set to "IOUSBHostInterface". */
+		let matchingDic = IOUSBHostInterface.__createMatchingDictionary(
+			withVendorID: NSNumber(value: deviceDescriptor.idVendor),
+			productID: NSNumber(value: deviceDescriptor.idProduct),
+			bcdDevice: NSNumber(value: deviceDescriptor.bcdDevice),
+			interfaceNumber: NSNumber(value: interfaceDescription.bInterfaceNumber),
+			configurationValue: NSNumber(value: configPtr.pointee.bConfigurationValue),
+			interfaceClass: NSNumber(value: interfaceDescription.bInterfaceClass),
+			interfaceSubclass: NSNumber(value: interfaceDescription.bInterfaceSubClass),
+			interfaceProtocol: NSNumber(value: interfaceDescription.bInterfaceProtocol),
+			speed: nil,
+			productIDArray: nil
+		).takeUnretainedValue()
+		
+		var iterator: io_iterator_t = .zero
+		let ret = IOServiceGetMatchingServices(kIOMainPortDefault, matchingDic, &iterator)
+		guard ret == KERN_SUCCESS else {throw Err.kernelError(ret)}
+		defer {Self.releaseIOObject(iterator)}
+		
+		let allInterfaceObjects = Self.getAll(from: iterator)
+		guard let firstInterfaceObject = allInterfaceObjects.first, allInterfaceObjects.count == 1 else {
+			throw Err.foundTooManyOrNoMatchingInterfaces
+		}
+		
+		let interface = try IOUSBHostInterface(__ioService: firstInterfaceObject, options: [/*Nothing: We do not (and cannot) capture the device.*/], queue: nil, interestHandler: nil)
+		defer {interface.destroy()}
+		print(interface)
+		
+		/* Aaaaand we hit a dead-end.
+		 * The IOUSBHostInterface init fails with error “Exclusive open of usb object failed.”
+		 * Then I saw the Luxafor flag is HID; so we’ll use the much lighter HID version of USB; and things should go well.
+		 * If we succeeded in getting the IOUSBHostInterface object, we could’ve created the pipes necessary to write the the device.
+		 * See https://github.com/didactek/deft-simple-usb/blob/951a3c907390342ba13c9006351c575caf02fd11/Sources/HostFWUSB/HostFWUSBDevice.swift#L70 */
 	}
 	
 	/* *************

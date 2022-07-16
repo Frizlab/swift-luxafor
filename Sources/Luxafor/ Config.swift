@@ -1,8 +1,5 @@
-/*
- *  Config.swift
- *
- * Created by François Lamboley on 2022/07/04.
- */
+/*  Config.swift
+ * Created by François Lamboley on 2022/07/04. */
 
 import Foundation
 
