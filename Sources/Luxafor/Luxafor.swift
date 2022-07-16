@@ -106,7 +106,10 @@ public final actor Luxafor {
 		 * See https://github.com/didactek/deft-simple-usb/blob/951a3c907390342ba13c9006351c575caf02fd11/Sources/HostFWUSB/HostFWUSBDevice.swift#L70
 		 *
 		 * After some research, I found this: https://github.com/didactek/deft-mcp2221#hid-vs-iousbhost
-		 * So yeah, we HAVE TO use HID methods to access HID devices on macOS. */
+		 * So yeah, we HAVE TO use HID methods to access HID devices on macOS.
+		 *
+		 * Some more interesting fact: “The bInterfaceClass member of an Interface descriptor is always 3 for HID class devices.”
+		 * This is from https://www.usb.org/sites/default/files/hid1_11.pdf */
 	}
 	
 	/* *************
