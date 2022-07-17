@@ -46,7 +46,24 @@ public final actor Luxafor {
 	}
 	
 	public func yolo() throws {
-		var bytes: [UInt8] = [0x01, 0xff, 0xff, 0x00, 0x00, 0x0, 0x0, 0x00]
+		let bytes: [UInt8] = [
+			0x01, /* Command (1 or 2, set color, 2 w/ fade) */
+			0xff, /* LED selection (all ff=all) */
+			0x00, /* Red */
+			0x07, /* Green */
+			0x00, /* Blue */
+			0x10, /* Fade time (if != 0 first byte should be set to 0x02) */
+			0x10, /* Unknown */
+			0x10  /* Unknown */]
+//		let bytes: [UInt8] = [
+//			0x06, /* Command (pattern) */
+//			0x08, /* Pattern (1-8) */
+//			0x01, /* Repeat (0 is forever) */
+//			0x00, /* Unknown */
+//			0x00, /* Unknown */
+//			0x00, /* Unknown */
+//			0x00, /* Unknown */
+//			0x00  /* Unknown */]
 		if bytes.count > maxReportSize {
 			throw Err.tooManyBytesToSend
 		}
