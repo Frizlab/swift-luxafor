@@ -7,12 +7,11 @@ import Foundation
 
 public enum LuxaforError : Error {
 	
-	case kernelError(kern_return_t)
-	case noDeviceDescriptor
-	case noConfigurationDescriptor
-	case invalidInterfacesCount
-	case cannotGetInteraceDescriptor
-	case foundTooManyOrNoMatchingInterfaces
+	case cannotGetMatchingHIDDevices
+	case cannotGetMaxReportSizeOfDevice
+	case cannotOpenDevice(IOReturn)
+	case tooManyBytesToSend
+	case errorSettingReport(IOReturn)
 	
 }
 
