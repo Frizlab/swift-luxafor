@@ -31,7 +31,8 @@ struct Luxaforctl : AsyncParsableCommand {
 		LuxaforConfig.logger?.logLevel = .debug
 		
 		for luxafor in try Luxafor.find() {
-			try await luxafor.startStrobe(on: .all, red: 255, green: 255, blue: 255, duration: 0x09, repeatCount: 3)
+//			try await luxafor.setColor(on: .all, red: 0x07, green: 0x00, blue: 0x00)
+			try await luxafor.turnOff(.all)
 		}
 	}
 	

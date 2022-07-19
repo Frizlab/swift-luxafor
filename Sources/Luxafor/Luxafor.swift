@@ -45,6 +45,11 @@ public final actor Luxafor {
 	}
 	
 	/** I don’t know the unit of the duration. */
+	public func turnOff(_ leds: Leds, fadeDuration: UInt8? = nil) throws {
+		try setColor(on: leds, red: 0x00, green: 0x00, blue: 0x00, fadeDuration: fadeDuration)
+	}
+	
+	/** I don’t know the unit of the duration. */
 	public func setColor(on leds: Leds, red: UInt8, green: UInt8, blue: UInt8, fadeDuration: UInt8? = nil) throws {
 		/* Original project (from which we are forked) used 0x00 for the last two bytes, or when fade is not set, but apparently Luxafor sends 0x10.0
 		 * I don’t think this changes anything.
