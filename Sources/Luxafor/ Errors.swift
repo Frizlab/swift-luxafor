@@ -5,6 +5,7 @@ import Foundation
 
 
 
+/* Hint: There is a mach_error_string function that exists (IOReturn code to string). */
 public enum LuxaforError : Error {
 	
 	case cannotGetMatchingHIDDevices

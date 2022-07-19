@@ -38,47 +38,40 @@ public final actor Luxafor {
 				do {
 					return try Self(device: device)
 				} catch {
-					/* We release the objects for which we cannot create an IOUSBHostDevice. */
 					Conf.logger?.info("Skipping device because we cannot create a Luxafor object with it.", metadata: ["device": "\(device)", "error": "\(error)"])
 					return nil
 				}
 			}
 	}
 	
-	public func yolo() throws {
-		let bytes: [UInt8] = [
-			0x01, /* Command (1 or 2, set color, 2 w/ fade) */
-			0xff, /* LED selection (all ff=all) */
-			0x00, /* Red */
-			0x07, /* Green */
-			0x00, /* Blue */
-			0x10, /* Fade time (if != 0 first byte should be set to 0x02) */
-			0x10, /* Unknown */
-			0x10  /* Unknown */]
-//		let bytes: [UInt8] = [
-//			0x06, /* Command (pattern) */
-//			0x08, /* Pattern (1-8) */
-//			0x01, /* Repeat (0 is forever) */
-//			0x00, /* Unknown */
-//			0x00, /* Unknown */
-//			0x00, /* Unknown */
-//			0x00, /* Unknown */
-//			0x00  /* Unknown */]
-		if bytes.count > maxReportSize {
-			throw Err.tooManyBytesToSend
-		}
-		let ret = bytes.withUnsafeBytes{ ptr in
-			IOHIDDeviceSetReport(
-				device, kIOHIDReportTypeOutput,
-				/*reportID: */0,
-				ptr.baseAddress!.assumingMemoryBound(to: UInt8.self), ptr.count
-			)
-		}
-		guard ret == kIOReturnSuccess else {
-			print(String(cString: mach_error_string(ret)!))
-			throw Err.errorSettingReport(ret)
-		}
-		print("ok")
+	/** I don’t know the unit of the duration. */
+	public func setColor(on leds: Leds, red: UInt8, green: UInt8, blue: UInt8, fadeDuration: UInt8? = nil) throws {
+		/* Original project (from which we are forked) used 0x00 for the last two bytes, or when fade is not set, but apparently Luxafor sends 0x10.0
+		 * I don’t think this changes anything.
+		 * (We gathered this by launching the Luxafor.app/Contents/MacOS/Luxafor in a Terminal; we get logs of what is sent and received.) */
+		try send(bytes: [fadeDuration == nil ? 0x01 : 0x02, leds.rawValue, red, green, blue, fadeDuration ?? 0x10, 0x10, 0x10])
+	}
+	
+	/**
+	 A `repeatCount` of 0 means the strobe will not stop.
+	 I don’t know the unit of the duration. */
+	public func startStrobe(on leds: Leds, red: UInt8, green: UInt8, blue: UInt8, duration: UInt8, repeatCount: UInt8) throws {
+		try send(bytes: [0x03, leds.rawValue, red, green, blue, duration, 0x00, repeatCount])
+	}
+	
+	/**
+	 A `repeatCount` of 0 means the wave will not stop.
+	 I don’t know the unit of the duration. */
+	public func startWave(_ wave: Wave, red: UInt8, green: UInt8, blue: UInt8, duration: UInt8, repeatCount: UInt8) throws {
+		try send(bytes: [0x04, wave.rawValue, red, green, blue, 0x00, repeatCount, duration])
+	}
+	
+	/** A `repeatCount` of 0 means the wave will not stop. */
+	public func startPattern(_ pattern: Pattern, repeatCount: UInt8) throws {
+		/* Original project (from which we are forked) used 0x00 for the last five bytes, but apparently Luxafor sends 0x10.
+		 * I don’t think this changes anything.
+		 * (We gathered this by launching the Luxafor.app/Contents/MacOS/Luxafor in a Terminal; we get logs of what is sent and received.) */
+		try send(bytes: [0x06, pattern.rawValue, repeatCount, 0x10, 0x10, 0x10, 0x10, 0x10])
 	}
 	
 	/* *************
@@ -111,5 +104,26 @@ public final actor Luxafor {
 	
 	internal let device: IOHIDDevice
 	internal let maxReportSize: Int
+	
+	internal func send(bytes: [UInt8]) throws {
+		guard !bytes.isEmpty else {
+			return
+		}
+		
+		guard bytes.count <= maxReportSize else {
+			throw Err.tooManyBytesToSend
+		}
+		
+		let ret = bytes.withUnsafeBytes{ ptr in
+			IOHIDDeviceSetReport(
+				device, kIOHIDReportTypeOutput,
+				/*reportID: */0,
+				ptr.baseAddress!.assumingMemoryBound(to: UInt8.self), ptr.count
+			)
+		}
+		guard ret == kIOReturnSuccess else {
+			throw Err.errorSettingReport(ret)
+		}
+	}
 	
 }
