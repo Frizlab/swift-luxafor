@@ -15,7 +15,7 @@ import Luxafor
 struct Luxaforctl : AsyncParsableCommand {
 	
 	static var configuration: CommandConfiguration = .init(
-		subcommands: [Off.self, Red.self, Green.self, Color.self]
+		subcommands: [Off.self, Red.self, Green.self, Color.self, Strobe.self]
 	)
 	
 	struct Options : ParsableArguments {
