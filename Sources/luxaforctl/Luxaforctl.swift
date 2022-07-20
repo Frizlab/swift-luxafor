@@ -15,7 +15,7 @@ import Luxafor
 struct Luxaforctl : AsyncParsableCommand {
 	
 	static var configuration: CommandConfiguration = .init(
-		subcommands: [Off.self, Red.self, Green.self, Color.self, Strobe.self]
+		subcommands: [Off.self, Red.self, Green.self, Color.self, Strobe.self, Pattern.self, Wave.self]
 	)
 	
 	struct Options : ParsableArguments {
@@ -45,19 +45,6 @@ struct Luxaforctl : AsyncParsableCommand {
 		}
 		return luxafors
 	}
-	
-//	enum Command : String, ExpressibleByArgument {
-//
-//		case off
-//		case color
-//		case strobe
-//		case wave
-//		case pattern
-//
-//		case red
-//		case green
-//
-//	}
 	
 	struct Err : Error, CustomStringConvertible {
 		var message: String

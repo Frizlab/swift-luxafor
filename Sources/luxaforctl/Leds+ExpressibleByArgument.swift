@@ -1,4 +1,4 @@
-/* Led+ExpressibleByArgument.swift
+/* Leds+ExpressibleByArgument.swift
  * Created by François Lamboley on 2022/07/19. */
 
 import Foundation
