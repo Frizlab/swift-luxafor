@@ -1,8 +1,5 @@
-/*
- * Luxaforctl.swift
- *
- * Created by François Lamboley on 2022/07/04.
- */
+/* Luxaforctl.swift
+ * Created by François Lamboley on 2022/07/04. */
 
 import Foundation
 
@@ -17,23 +14,54 @@ import Luxafor
 @main
 struct Luxaforctl : AsyncParsableCommand {
 	
-	@Option
-	var leds: Leds = .all
+	static var configuration: CommandConfiguration = .init(
+		subcommands: [Off.self, Red.self, Green.self]
+	)
 	
-	static var logger: Logger = {
+	struct Options : ParsableArguments {
+		
+		/* Note: I’d have liked to retrieve serial number or any identifier that would have allowed to send the device to a specified Luxafor, but I was not able to get one. */
+		@Flag(help: "By default we fail the command if more than one Luxafor is connected to the computer. Set this to send the command to all connected Luxafors when more than one are connected.")
+		var enableMultipleLuxafor: Bool = false
+		
+	}
+	
+	static /*lazy*/ var logger: Logger = {
+		LoggingSystem.bootstrap{ _ in CLTLogger() }
+		LuxaforConfig.logger?.logLevel = .debug
+		
 		var ret = Logger(label: "main")
 		ret.logLevel = .debug
 		return ret
 	}()
 	
-	func run() async throws {
-		LoggingSystem.bootstrap{ _ in CLTLogger() }
-		LuxaforConfig.logger?.logLevel = .debug
-		
-		for luxafor in try Luxafor.find() {
-//			try await luxafor.setColor(on: .all, red: 0x07, green: 0x00, blue: 0x00)
-			try await luxafor.turnOff(.all)
+	static func getLuxafors(for options: Options) throws -> [Luxafor] {
+		let luxafors = try Luxafor.find()
+		guard !luxafors.isEmpty else {
+			throw Err(message: "No Luxafor devices found.")
 		}
+		guard luxafors.count == 1 || options.enableMultipleLuxafor else {
+			throw Err(message: "Found \(luxafors.count) Luxafor devices; bailing out. Re-run with --enable-multiple-luxafor to send the command to all of them.")
+		}
+		return luxafors
+	}
+	
+//	enum Command : String, ExpressibleByArgument {
+//
+//		case off
+//		case color
+//		case strobe
+//		case wave
+//		case pattern
+//
+//		case red
+//		case green
+//
+//	}
+	
+	struct Err : Error, CustomStringConvertible {
+		var message: String
+		var description: String {return message}
 	}
 	
 }
